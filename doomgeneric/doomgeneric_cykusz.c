@@ -41,6 +41,7 @@ uint32_t DG_GetTicksMs()
 
 int DG_GetKey(int* pressed, unsigned char* doomKey)
 {
+    return 0;
 }
 
 void DG_SetWindowTitle(const char * title)
