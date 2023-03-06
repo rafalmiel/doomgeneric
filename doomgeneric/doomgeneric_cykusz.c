@@ -169,21 +169,31 @@ static void handleKeyInput()
     tm.tv_sec = 0;
     tm.tv_usec = 0;
 
-    FD_ZERO(&r);
-    FD_SET(KeyboardFd, &r);
+    while (1) {
+        FD_ZERO(&r);
+        FD_SET(KeyboardFd, &r);
+        int res = select(1, &r, 0, 0, &tm);
 
-    int res = select(1, &r, 0, 0, &tm);
+        if (res > 0) {
+            struct event evt;
+            read(KeyboardFd, &evt, sizeof(struct event));
 
-    if (res > 0) {
-        struct event evt;
-        read(KeyboardFd, &evt, sizeof(struct event));
+            if (evt.val == 2) {
+                // ignore repeat key events
+                continue;
+            }
 
-        addKeyToQueue((evt.val == 1) ? 0 : 1, evt.code);
+            addKeyToQueue((evt.val == 1) ? 0 : 1, evt.code);
+        } else {
+            break;
+        }
     }
 }
 
 void DG_DrawFrame()
 {
+    handleKeyInput();
+
     if (FrameBuffer)
     {
         for (int i = 0; i < DOOMGENERIC_RESY; ++i)
@@ -191,8 +201,6 @@ void DG_DrawFrame()
             memcpy(FrameBuffer + s_PositionX + (i + s_PositionY) * s_ScreenWidth, DG_ScreenBuffer + i * DOOMGENERIC_RESX, DOOMGENERIC_RESX * 4);
         }
     }
-
-    handleKeyInput();
 }
 
 void DG_SleepMs(uint32_t ms)
