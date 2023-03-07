@@ -71,9 +71,32 @@ static unsigned char convertToDoomKey(unsigned char scancode)
     case 0x2A:
         key = KEY_RSHIFT;
         break;
-    case 0x15:
-        key = 'y';
-        break;
+    case 16: key = 'q'; break;
+    case 17: key = 'w'; break;
+    case 18: key = 'e'; break;
+    case 19: key = 'r'; break;
+    case 20: key = 't'; break;
+    case 21: key = 'y'; break;
+    case 22: key = 'u'; break;
+    case 23: key = 'i'; break;
+    case 24: key = 'o'; break;
+    case 25: key = 'p'; break;
+    case 30: key = 'a'; break;
+    case 31: key = 's'; break;
+    case 32: key = 'd'; break;
+    case 33: key = 'f'; break;
+    case 34: key = 'g'; break;
+    case 35: key = 'h'; break;
+    case 36: key = 'j'; break;
+    case 37: key = 'k'; break;
+    case 38: key = 'l'; break;
+    case 44: key = 'z'; break;
+    case 45: key = 'x'; break;
+    case 46: key = 'c'; break;
+    case 47: key = 'v'; break;
+    case 48: key = 'b'; break;
+    case 49: key = 'n'; break;
+    case 50: key = 'm'; break;
     default:
         break;
     }
