@@ -20,6 +20,15 @@
 
 #include <cykusz/syscall.h>
 
+static uint64_t GFBINFO = 0x3415;
+
+struct fb_info {
+    uint64_t width;
+    uint64_t height;
+    uint64_t pitch;
+    uint64_t bpp;
+};
+
 static int FrameBufferFd = -1;
 static int* FrameBuffer = 0;
 
@@ -36,6 +45,7 @@ static unsigned int s_PositionY = 0;
 
 static unsigned int s_ScreenWidth = 0;
 static unsigned int s_ScreenHeight = 0;
+static unsigned int s_ScreenPitch = 0;
 
 static unsigned char convertToDoomKey(unsigned char scancode)
 {
@@ -144,13 +154,19 @@ void DG_Init()
 
     if (FrameBufferFd >= 0)
     {
+        struct fb_info finfo;
+        ioctl(FrameBufferFd, GFBINFO, &finfo);
         printf("Getting screen width...");
-        s_ScreenWidth = 640;
+        s_ScreenWidth = finfo.width;
         printf("%d\n", s_ScreenWidth);
 
         printf("Getting screen height...");
-        s_ScreenHeight = 480;
+        s_ScreenHeight = finfo.height;
         printf("%d\n", s_ScreenHeight);
+
+        printf("Getting screen pitch...");
+        s_ScreenPitch = finfo.pitch;
+        printf("%d\n", s_ScreenPitch);
 
         if (0 == s_ScreenWidth || 0 == s_ScreenHeight)
         {
@@ -158,7 +174,7 @@ void DG_Init()
             exit(1);
         }
 
-        FrameBuffer = mmap(NULL, s_ScreenWidth * s_ScreenHeight * 4, PROT_READ | PROT_WRITE, 0, FrameBufferFd, 0);
+        FrameBuffer = mmap(NULL, s_ScreenPitch * s_ScreenHeight, PROT_READ | PROT_WRITE, 0, FrameBufferFd, 0);
 
         if (FrameBuffer != (int*)-1)
         {
@@ -221,7 +237,7 @@ void DG_DrawFrame()
     {
         for (int i = 0; i < DOOMGENERIC_RESY; ++i)
         {
-            memcpy(FrameBuffer + s_PositionX + (i + s_PositionY) * s_ScreenWidth, DG_ScreenBuffer + i * DOOMGENERIC_RESX, DOOMGENERIC_RESX * 4);
+            memcpy(FrameBuffer + s_PositionX + (i + s_PositionY) * s_ScreenPitch / 4, DG_ScreenBuffer + i * DOOMGENERIC_RESX, DOOMGENERIC_RESX * 4);
         }
     }
 }
