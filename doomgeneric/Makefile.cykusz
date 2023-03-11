@@ -14,7 +14,7 @@ endif
 
 CC=x86_64-cykusz-gcc  # gcc or g++
 CFLAGS+=-O3
-LDFLAGS+=$(CYKUSZ_ROOT)/usr/lib/crt0.o $(CYKUSZ_ROOT)/usr/lib/gcc/x86_64-cykusz/10.2.0/crti.o $(CYKUSZ_ROOT)/usr/lib/gcc/x86_64-cykusz/10.2.0/crtn.o
+LDFLAGS+=$(CYKUSZ_ROOT)/usr/lib/crt0.o $(CYKUSZ_ROOT)/usr/lib/gcc/x86_64-cykusz/12.2.0/crti.o $(CYKUSZ_ROOT)/usr/lib/gcc/x86_64-cykusz/12.2.0/crtn.o
 CFLAGS+=-Wall -DNORMALUNIX -DLINUX -DSNDSERV -D_DEFAULT_SOURCE # -DUSEASM
 LIBS+=-lm -lc 
 
