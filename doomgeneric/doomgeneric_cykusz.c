@@ -74,8 +74,14 @@ static unsigned char convertToDoomKey(unsigned char scancode)
     case 0x1D:
         key = KEY_FIRE;
         break;
-    case 0x38:
+    case 0x39:
         key = KEY_USE;
+        break;
+    case 0x68:
+        key = KEY_STRAFE_L;
+        break;
+    case 0x6D:
+        key = KEY_STRAFE_R;
         break;
     case 0x36:
     case 0x2A:
@@ -276,4 +282,17 @@ int DG_GetKey(int* pressed, unsigned char* doomKey)
 
 void DG_SetWindowTitle(const char * title)
 {
+}
+
+int main(int argc, char **argv)
+{
+    doomgeneric_Create(argc, argv);
+
+    for (int i = 0; ; i++)
+    {
+        doomgeneric_Tick();
+    }
+    
+
+    return 0;
 }
