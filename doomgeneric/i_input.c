@@ -286,7 +286,6 @@ void I_GetEvent(void)
 	while (DG_GetKey(&pressed, &key))
     {
         UpdateShiftStatus(pressed, key);
-
         // process event
         
         if (pressed)
@@ -323,6 +322,16 @@ void I_GetEvent(void)
         }
     }
 
+    int mouse_buttons;
+    int rel_x;
+    int rel_y;
+    while (DG_GetMouse(&mouse_buttons, &rel_x, &rel_y)) {
+        event.type = ev_mouse;
+        event.data1 = mouse_buttons;
+        event.data2 = rel_x;
+        event.data3 = rel_y;
+        D_PostEvent(&event);
+    }
 
                 /*
             case SDL_MOUSEMOTION:

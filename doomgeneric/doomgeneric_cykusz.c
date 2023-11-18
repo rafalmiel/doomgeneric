@@ -29,16 +29,33 @@ struct fb_info {
     uint64_t bpp;
 };
 
+struct event {
+    struct timeval tim;
+    uint16_t typ;
+    uint16_t code;
+    int32_t val;
+};
+
+struct mouse_event {
+    int buttons;
+    int rel_x;
+    int rel_y;
+    int got_data;
+};
+
 static int FrameBufferFd = -1;
 static int* FrameBuffer = 0;
 
 static int KeyboardFd = -1;
+static int MouseFd = -1;
 
 #define KEYQUEUE_SIZE 16
 
 static unsigned short s_KeyQueue[KEYQUEUE_SIZE];
 static unsigned int s_KeyQueueWriteIndex = 0;
 static unsigned int s_KeyQueueReadIndex = 0;
+
+static struct mouse_event s_mouse;
 
 static unsigned int s_PositionX = 0;
 static unsigned int s_PositionY = 0;
@@ -65,10 +82,10 @@ static unsigned char convertToDoomKey(unsigned char scancode)
     case 0x6A:
         key = KEY_RIGHTARROW;
         break;
-    case 0x67:
+    case 17: // w
         key = KEY_UPARROW;
         break;
-    case 0x6C:
+    case 31: // s
         key = KEY_DOWNARROW;
         break;
     case 0x1D:
@@ -77,10 +94,10 @@ static unsigned char convertToDoomKey(unsigned char scancode)
     case 0x39:
         key = KEY_USE;
         break;
-    case 0x68:
+    case 30: // a
         key = KEY_STRAFE_L;
         break;
-    case 0x6D:
+    case 32: // d
         key = KEY_STRAFE_R;
         break;
     case 0x36:
@@ -88,7 +105,6 @@ static unsigned char convertToDoomKey(unsigned char scancode)
         key = KEY_RSHIFT;
         break;
     case 16: key = 'q'; break;
-    case 17: key = 'w'; break;
     case 18: key = 'e'; break;
     case 19: key = 'r'; break;
     case 20: key = 't'; break;
@@ -97,9 +113,6 @@ static unsigned char convertToDoomKey(unsigned char scancode)
     case 23: key = 'i'; break;
     case 24: key = 'o'; break;
     case 25: key = 'p'; break;
-    case 30: key = 'a'; break;
-    case 31: key = 's'; break;
-    case 32: key = 'd'; break;
     case 33: key = 'f'; break;
     case 34: key = 'g'; break;
     case 35: key = 'h'; break;
@@ -197,18 +210,12 @@ void DG_Init()
     }
 
     KeyboardFd = open("/dev/kbd", O_RDONLY);
+    MouseFd = open("/dev/mouse", O_RDONLY);
 
     enableRawMode();
 }
 
-struct event {
-    struct timeval tim;
-    uint16_t typ;
-    uint16_t code;
-    int32_t val;
-};
-
-static void handleKeyInput()
+static void handleInput()
 {
     fd_set r;
     struct timeval tm;
@@ -218,18 +225,66 @@ static void handleKeyInput()
     while (1) {
         FD_ZERO(&r);
         FD_SET(KeyboardFd, &r);
-        int res = select(1, &r, 0, 0, &tm);
+        FD_SET(MouseFd, &r);
+        int res = select(2, &r, 0, 0, &tm);
 
         if (res > 0) {
-            struct event evt;
-            read(KeyboardFd, &evt, sizeof(struct event));
+            if (FD_ISSET(KeyboardFd, &r)) {
+                struct event evt;
+                read(KeyboardFd, &evt, sizeof(struct event));
 
-            if (evt.val == 2) {
-                // ignore repeat key events
-                continue;
+                if (evt.val == 2) {
+                    // ignore repeat key events
+                    continue;
+                }
+
+                addKeyToQueue((evt.val == 1) ? 0 : 1, evt.code);
             }
 
-            addKeyToQueue((evt.val == 1) ? 0 : 1, evt.code);
+            if (FD_ISSET(MouseFd, &r)) {
+                struct event evt;
+                read(MouseFd, &evt, sizeof(struct event));
+
+                s_mouse.got_data = 1;
+
+                switch (evt.typ) {
+                    case 1: {
+                        int idx;
+                        switch (evt.code) {
+                            case 0x110: { // mouse left
+                                idx = 0;
+                            }
+                            break;
+                            case 0x111: { // mouse right
+                                idx = 1;
+                            }
+                            break;
+                            case 0x112: { // mouse middle
+                                idx = 2;
+                            }
+                        }
+                        if (evt.val) {
+                            s_mouse.buttons |= (1 << idx);
+                        } else {
+                            s_mouse.buttons &= ~(1 << idx);
+                        }
+                    }
+                    break;
+                    case 2: {
+                        switch (evt.code) {
+                            case 0: { //rel x
+                                s_mouse.rel_x += evt.val;
+                            }
+                            break;
+                            case 1: { //rel y
+                                s_mouse.rel_y += evt.val;
+                            }
+                            break;
+                        }
+                    }
+                    break;
+                }
+            }
         } else {
             break;
         }
@@ -238,7 +293,7 @@ static void handleKeyInput()
 
 void DG_DrawFrame()
 {
-    handleKeyInput();
+    handleInput();
 
     if (FrameBuffer)
     {
@@ -279,6 +334,23 @@ int DG_GetKey(int* pressed, unsigned char* doomKey)
 
         return 1;
     }
+}
+
+int DG_GetMouse(int* buttons, int* rel_x, int* rel_y) {
+    if (s_mouse.got_data == 0) {
+        return 0;
+    }
+
+    *buttons = s_mouse.buttons;
+    *rel_x = s_mouse.rel_x;
+    *rel_y = s_mouse.rel_y;
+    //printf("mouse evt: %d %d %d\n", *buttons, *rel_x, *rel_y);
+
+    s_mouse.got_data = 0;
+    s_mouse.rel_x = 0;
+    s_mouse.rel_y = 0;
+
+    return 1;
 }
 
 void DG_SetWindowTitle(const char * title)
