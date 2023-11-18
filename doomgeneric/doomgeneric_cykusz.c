@@ -202,6 +202,7 @@ void DG_Init()
 }
 
 struct event {
+    struct timeval tim;
     uint16_t typ;
     uint16_t code;
     int32_t val;
