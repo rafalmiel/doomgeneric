@@ -193,7 +193,7 @@ void DG_Init()
             exit(1);
         }
 
-        FrameBuffer = mmap(NULL, s_ScreenPitch * s_ScreenHeight, PROT_READ | PROT_WRITE, 0, FrameBufferFd, 0);
+        FrameBuffer = mmap(NULL, s_ScreenPitch * s_ScreenHeight, PROT_READ | PROT_WRITE, MAP_SHARED, FrameBufferFd, 0);
 
         if (FrameBuffer != (int*)-1)
         {
