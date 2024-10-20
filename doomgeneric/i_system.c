@@ -453,7 +453,11 @@ void I_Error (char *error, ...)
         printf("%s\n", msgbuf);
         exit(-1);
     }
-
+#elif defined(__CYKUSZ__)
+    {
+        printf("%s\n", msgbuf);
+        exit(-1);
+    }
 #else
     {
         ZenityErrorBox(msgbuf);
